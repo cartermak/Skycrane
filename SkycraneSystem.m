@@ -90,8 +90,8 @@ classdef SkycraneSystem < BaseSystem
             Omega = obj.dt*obj.Gamma;
             
             % Load given matrices for control and noise
-            K_ctrl = 1e-7*load('skycrane_finalproj_KFdata.mat','Klin').Klin;
-            Q = 1e-7*load('skycrane_finalproj_KFdata.mat','Qtrue').Qtrue;
+            K_ctrl = load('skycrane_finalproj_KFdata.mat','Klin').Klin;
+            Q = load('skycrane_finalproj_KFdata.mat','Qtrue').Qtrue;
             R = load('skycrane_finalproj_KFdata.mat','Rtrue').Rtrue;
             
             % Matrix square roots via Cholesky decomp. for noise
