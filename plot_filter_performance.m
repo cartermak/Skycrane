@@ -18,11 +18,9 @@ function [f1,f2] = plot_filter_performance(...
 
     n = size(x_filt,1);
     N = size(x_filt,2);
-    f1 = figure("Visible","off");
-    f2 = figure("Visible","off");
-    f3 = figure("Visible","off");
-    % f1 = figure;
-    % f2 = figure;
+    f1 = figure;
+    f2 = figure;
+    f3 = figure;
     for i = 1:n
         figure(f1);
         subplot(n,1,i)
@@ -65,8 +63,8 @@ function [f1,f2] = plot_filter_performance(...
     sgtitle(sprintf('%s State Estimate Error',name),...
         "Interpreter","latex")
 
-    set(f1,"Visible","on")
-    set(f2,"Visible","on")
-    set(f3,"Visible","on")
+%     set(f1,"Visible","on")
+%     set(f2,"Visible","on")
+%     set(f3,"Visible","on")
 
 end
