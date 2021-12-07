@@ -62,7 +62,7 @@ classdef SkycraneSystem < BaseSystem
             % Measurement function
             h = [xi;z;theta_dot;xi_ddot];
             dh_dx = jacobian(h,x);
-%             dh_du = jacobian(h,u);
+            dh_du = jacobian(h,u);
 
             % Function handles for later evaluations
             obj.f = matlabFunction(f,'Vars',{x,u});
@@ -70,6 +70,7 @@ classdef SkycraneSystem < BaseSystem
             obj.A = matlabFunction(df_dx,'Vars',{x,u});
             obj.B = matlabFunction(df_du,'Vars',{x,u});
             obj.C = matlabFunction(dh_dx,'Vars',{x,u});
+            obj.D = matlabFunction(dh_du,'Vars',{x,u});
             obj.Gamma = [0,0,0;1,0,0;0,0,0;0,1,0;0,0,0;0,0,1];
             
             % Matrix dimensions
@@ -95,8 +96,8 @@ classdef SkycraneSystem < BaseSystem
             R = load('skycrane_finalproj_KFdata.mat','Rtrue').Rtrue;
             
             % Matrix square roots via Cholesky decomp. for noise
-            S_w = chol(Q,'lower');
-            S_v = chol(R,'lower');
+%             S_w = chol(Q,'lower');
+%             S_v = chol(R,'lower');
             
             % Preallocate output matrices
             obj.xs = zeros(6,obj.N+1);
@@ -110,14 +111,14 @@ classdef SkycraneSystem < BaseSystem
             for k = 1:obj.N
                 % Propagate state from k-1 to k with simulated noise
                 obj.xs(:,k+1) = obj.integrate_nl_dynamics(...
-                    obj.xs(:,k),obj.us(:,k)) + Omega*S_w*randn(3,1);
+                    obj.xs(:,k),obj.us(:,k)) + Omega*mvnrnd([0;0;0],Q)';
                 
                 % Evalulate new control input at time k
                 obj.us(:,k+1) = u_nom-K_ctrl*(obj.xs(:,k+1)-x_nom);
                 
                 % Evaluate measurement with simulated noise
                 obj.ys(:,k+1) = obj.h(obj.xs(:,k+1),obj.us(:,k+1)) + ...
-                    S_v*randn(4,1);
+                    mvnrnd([0;0;0;0],R)';
             end
             
             % Calculate delta- terms for x, u, and y

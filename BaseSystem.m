@@ -11,7 +11,7 @@ classdef (Abstract) BaseSystem
         B % B(x,u)
         Gamma % static matrix
         C % C(x,u)
-        % D % Maybe don't need D????
+        D % D(x,u)
         Q % Process noise covariance matrix
         R % Measurement noise covariance matrix
         
@@ -45,7 +45,7 @@ classdef (Abstract) BaseSystem
             obj = obj.generate_data(dx0);
         end
 
-        function [F,G,Omega,H] = get_lin_matrices(obj,k)
+        function [F,G,Omega,H,M] = get_lin_matrices(obj,k)
             %get_lin_matrices Get SS matrices for Linearized KF
             % Get the linearized DT SS matrices for use with the linearized
             % Kalman filter.
@@ -57,14 +57,16 @@ classdef (Abstract) BaseSystem
             G = obj.dt*obj.B(x_nom,u_nom);
             Omega = obj.dt*obj.Gamma;
             H = obj.C(x_nom,u_nom);
+            M = obj.D(x_nom,u_nom);
             
             F(isnan(F)) = 0;
             G(isnan(G)) = 0;
             H(isnan(H)) = 0;
+            M(isnan(M)) = 0;
             
         end
         
-        function [F,G,Omega,H] = get_nl_matrices(obj,x_k,u_k)
+        function [F,G,Omega,H,M] = get_nl_matrices(obj,x_k,u_k)
             %get_nl_matrices Get SS matrices linearized about given state
             % This method evaluates the CT Jacobians about the given state
             % x_k at timestep k and converts to DT using the first-order
@@ -73,7 +75,8 @@ classdef (Abstract) BaseSystem
             F = eye(obj.n) + obj.dt*obj.A(x_k,u_k);
             G = obj.dt*obj.B(x_k,u_k);
             Omega = obj.dt*obj.Gamma;
-            H = obj.dt*obj.C(x_k,u_k);
+            H = obj.C(x_k,u_k);
+            M = obj.D(x_k,u_k);
             
         end
         

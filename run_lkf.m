@@ -16,11 +16,10 @@ dx = zeros(n,N+1);
 dx_pri = zeros(n,N+1);
 P = zeros(n,n,N+1);
 P_pri = zeros(n,n,N+1);
-I = eye(n);
 P(:,:,1) = eye(n);
 
 % Initialize terms before first iteration
-[F,G,Omega,~] = sys.get_lin_matrices(0);
+[F,G,Omega,~,~] = sys.get_lin_matrices(0);
 du = sys.get_ctrl_perturbation(0);
 
 for k = 1:N
@@ -38,13 +37,16 @@ for k = 1:N
     dy = sys.get_meas_perturbation(k);
     
     % Update DT SS matrices to current timestep
-    [F,G,Omega,H] = sys.get_lin_matrices(k);
+    [F,G,Omega,H,M] = sys.get_lin_matrices(k);
     
     % Calculate Kalman gain
     K = P_pri(:,:,k+1)*H'/(H*P_pri(:,:,k+1)*H' + R);
     
+    % Innovation vector
+    dy_hat = dy-H*dx_pri-M*du;
+    
     % Correct state estimate with measurement
-    dx(:,k+1) = dx_pri + K*(dy-H*dx_pri);
+    dx(:,k+1) = dx_pri + K*(dy_hat);
     
     % Update covariance to consider measurement
     P(:,:,k+1) = (I - K*H)*P_pri(:,:,k+1);
