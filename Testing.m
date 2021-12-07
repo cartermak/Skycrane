@@ -7,7 +7,7 @@ clear;close all;clc;
 % Definitions
 dt = 0.1;
 N = 500;
-dx0 = [0; 0.1; 1; 0; 0; 0.001];
+dx0 = [0; 0.1; 0.1; 0; 0; 0.001];
 Q = [10,0,0;
      0,100,0;
      0,0,1000];
@@ -30,7 +30,7 @@ for i = 1:NTMT % for each round of testing
 sys = SkycraneSystem(dt,N,dx0);
 
 % Run Kalman filter
-[x,P,P_pri,dx_Pri] = run_lkf(sys,Q,R);
+[x,P,P_pri,dx_Pri] = lkf(sys,Q,R);
 dx_Pri = dx_Pri + sys.x_noms;
 t = sys.ts;
 x_filter = x;
