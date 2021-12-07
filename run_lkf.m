@@ -4,18 +4,22 @@ function [x,P,P_pri,dx_pri] = run_lkf(sys,Q,R)
 % Q [n-by-n matrix]: Estimate of process noise covariance
 % R [p-by-p matrix]: Estimate of measurement noise covariance
 
-% dx0 = sys.dxs(:,1);
+% Get system dimensions
 n = sys.n;
 N = sys.N;
 
+% Common values
+I = eye(n);
+
+% Preallocate and initialize output matrices
 dx = zeros(n,N+1);
 dx_pri = zeros(n,N+1);
 P = zeros(n,n,N+1);
 P_pri = zeros(n,n,N+1);
 I = eye(n);
-
-% dx(:,1) = dx0;
 P(:,:,1) = eye(n);
+
+% Initialize terms before first iteration
 [F,G,Omega,~] = sys.get_lin_matrices(0);
 du = sys.get_ctrl_perturbation(0);
 
