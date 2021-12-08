@@ -6,7 +6,7 @@ classdef (Abstract) BaseSystem
     properties(Access=public)
         f % Nonlinear dynamics equations. f(x,u)
         h % Nonlinear measurement equations. h(x,u)
-%         K_ctrl % Feedback control gain matrix
+        K_ctrl % Feedback control gain matrix
         A % A(x,u)
         B % B(x,u)
         Gamma % static matrix
@@ -38,11 +38,10 @@ classdef (Abstract) BaseSystem
     
     methods(Access=public)
         
-        function obj = BaseSystem(dt,N,dx0)
+        function obj = BaseSystem(dt,N)
             obj.dt = dt;
             obj.N = N;
             obj.ts = linspace(0,N*dt,N+1);
-            obj = obj.generate_data(dx0);
         end
 
         function [F,G,Omega,H,M] = get_lin_matrices(obj,k)
@@ -83,19 +82,32 @@ classdef (Abstract) BaseSystem
         function x_kp1 = integrate_nl_dynamics(obj,x_k,u_k)
             %integrate_nl_dynamics Propagate full nonlinear dynamics
             % Numerically integrates from the given state x_k to the next
-            % timestep x_{k+1} using the full nonlinear dynamics and a
-            % single RK4 iteration using the configured timestep.
+            % timestep x_{k+1} using the full nonlinear dynamics and
+            % multiple RK4 iterations over the configured timestep.
             
-%             k1 = obj.f(x_k,u_k);
-%             k2 = obj.f(x_k+obj.dt*k1/2,u_k);
-%             k3 = obj.f(x_k+obj.dt*k2/2,u_k);
-%             k4 = obj.f(x_k+obj.dt*k3,u_k);
-%             
-%             x_kp1 = x_k + (obj.dt/6)*(k1+2*k2+2*k3+k4);
+            % Number of RK4 steps to take
+            n_steps = 20;
+            dt_i = obj.dt/n_steps;
+            
+            % The value of x will update each RK4 step
+            x = x_k;
+            
+            for i = 1:n_steps
 
-            [~,x] = ode45(@(~,x)obj.f(x,u_k),[0,obj.dt],x_k);
+                k1 = obj.f(x,u_k);
+                k2 = obj.f(x+dt_i*k1/2,u_k);
+                k3 = obj.f(x+dt_i*k2/2,u_k);
+                k4 = obj.f(x+dt_i*k3,u_k);
+                x = x + (dt_i/6)*(k1+2*k2+2*k3+k4);
+
+            end
             
-            x_kp1 = x(end,:)';
+            % After n_steps, x is x_{k+1}
+            x_kp1 = x;
+            
+%             [~,x] = ode45(@(~,x)obj.f(x,u_k),[0,obj.dt],x_k);
+%             
+%             x_kp1 = x(end,:)';
             
         end
         

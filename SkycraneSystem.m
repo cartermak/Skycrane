@@ -1,12 +1,9 @@
 classdef SkycraneSystem < BaseSystem
     methods
         
-        function obj = SkycraneSystem(dt,N,dx0)
-            obj = obj@BaseSystem(dt,N,dx0);
-        end
-
-        function obj = generate_data(obj,dx0)
-
+        function obj = SkycraneSystem(dt,N)
+            obj = obj@BaseSystem(dt,N);
+            
             syms xi xi_dot
             syms z z_dot
             syms theta theta_dot
@@ -78,6 +75,11 @@ classdef SkycraneSystem < BaseSystem
             obj.m = 3;
             obj.p = 4;
             
+            % Load given matrices for control and noise
+            obj.K_ctrl = load('skycrane_finalproj_KFdata.mat','Klin').Klin;
+            obj.Q = load('skycrane_finalproj_KFdata.mat','Qtrue').Qtrue;
+            obj.R = load('skycrane_finalproj_KFdata.mat','Rtrue').Rtrue;
+            
             % Static nominal solution
             x_nom = [0; 0; 20; 0; 0; 0];
             u_nom = [0.5*3.711*(1510+390)/cos(pi/4);...
@@ -87,17 +89,17 @@ classdef SkycraneSystem < BaseSystem
             obj.u_noms = repmat(u_nom,1,obj.N+1);
             obj.y_noms = repmat(y_nom,1,obj.N+1);
             
+        end
+
+        function obj = generate_data(obj,dx0)
+            
+            % Redefine nominal solutions for convenience
+            x_nom = [0; 0; 20; 0; 0; 0];
+            u_nom = [0.5*3.711*(1510+390)/cos(pi/4);...
+                     0.5*3.711*(1510+390)/cos(pi/4)];
+
             % Evaluate mapping from process noise to DT state space
             Omega = obj.dt*obj.Gamma;
-            
-            % Load given matrices for control and noise
-            K_ctrl = load('skycrane_finalproj_KFdata.mat','Klin').Klin;
-            Q = load('skycrane_finalproj_KFdata.mat','Qtrue').Qtrue;
-            R = load('skycrane_finalproj_KFdata.mat','Rtrue').Rtrue;
-            
-            % Matrix square roots via Cholesky decomp. for noise
-%             S_w = chol(Q,'lower');
-%             S_v = chol(R,'lower');
             
             % Preallocate output matrices
             obj.xs = zeros(6,obj.N+1);
@@ -106,19 +108,20 @@ classdef SkycraneSystem < BaseSystem
             
             % Initialize state and control
             obj.xs(:,1) = dx0 + x_nom;
-            obj.us(:,1) = u_nom - K_ctrl*(obj.xs(:,1)-x_nom);
+            obj.us(:,1) = u_nom - obj.K_ctrl*(obj.xs(:,1)-x_nom);
             
             for k = 1:obj.N
                 % Propagate state from k-1 to k with simulated noise
                 obj.xs(:,k+1) = obj.integrate_nl_dynamics(...
-                    obj.xs(:,k),obj.us(:,k)) + Omega*mvnrnd([0;0;0],Q)';
+                    obj.xs(:,k),obj.us(:,k)) + ...
+                    Omega*mvnrnd([0;0;0],obj.Q)';
                 
                 % Evalulate new control input at time k
-                obj.us(:,k+1) = u_nom-K_ctrl*(obj.xs(:,k+1)-x_nom);
+                obj.us(:,k+1) = u_nom-obj.K_ctrl*(obj.xs(:,k+1)-x_nom);
                 
                 % Evaluate measurement with simulated noise
                 obj.ys(:,k+1) = obj.h(obj.xs(:,k+1),obj.us(:,k+1)) + ...
-                    mvnrnd([0;0;0;0],R)';
+                    mvnrnd([0;0;0;0],obj.R)';
             end
             
             % Calculate delta- terms for x, u, and y

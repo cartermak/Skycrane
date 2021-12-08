@@ -16,7 +16,7 @@ dx = zeros(n,N+1);
 dx_pri = zeros(n,N+1);
 P = zeros(n,n,N+1);
 P_pri = zeros(n,n,N+1);
-P(:,:,1) = eye(n);
+P(:,:,1) = 1e3*eye(n);
 
 % Initialize terms before first iteration
 [F,G,Omega,~,~] = sys.get_lin_matrices(0);

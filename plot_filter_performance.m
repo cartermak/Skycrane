@@ -17,10 +17,11 @@ function [f1,f2] = plot_filter_performance(...
         'facealpha',0.5,'edgealpha',0);
 
     n = size(x_filt,1);
-    N = size(x_filt,2);
-    f1 = figure;
-    f2 = figure;
-    f3 = figure;
+%     N = size(x_filt,2);
+    xlims = [ts(2),ts(end)];
+    f1 = figure('Units','inches','Position',[0,0,12,16]);
+    f2 = figure('Units','inches','Position',[0,0,12,16]);
+    f3 = figure('Units','inches','Position',[0,0,12,16]);
     for i = 1:n
         figure(f1);
         subplot(n,1,i)
@@ -35,20 +36,25 @@ function [f1,f2] = plot_filter_performance(...
         legend("$2\sigma$",...
             sprintf('%s Filter Estimate',x_labels(i)),...
             sprintf('%s Truth',x_labels(i)),...
-            "Interpreter","latex")
+            "Interpreter","latex","Location","eastoutside")
+        xlim(xlims)
         figure(f2);
         subplot(n,1,i)
         plot(ts,2*sigma,'k','LineWidth',1)
         ylabel(sprintf('%s [%s]',x_labels(i),x_units(i)),...
             "Interpreter","latex")
+        xlim(xlims)
         figure(f3);
         subplot(n,1,i)
-        plot_2sigma(ts,zeros(1,N),sigma)
+%         plot_2sigma(ts,zeros(1,N),sigma)
+        plot(ts,2*sigma,'b--','LineWidth',1)
         hold on
-        plot(ts,x_filt(i,:)-x_true(i,:),'k')
+        plot(ts,abs(x_filt(i,:)-x_true(i,:)),'k')
         hold off
+%         set(gca,'YScale','log')
         ylabel(sprintf('%s Error [%s]',x_labels(i),x_units(i)),...
             "Interpreter","latex")
+        xlim(xlims)
     end
     figure(f1)
     xlabel("Time [s]","Interpreter","latex")

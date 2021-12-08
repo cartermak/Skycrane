@@ -7,7 +7,7 @@ clear;close all;clc;
 % Definitions
 dt = 0.1;
 N = 500;
-dx0 = [0; 0.1; 0.1; 0; 0; 0.001];
+% dx0 = [0; 0.1; 0.1; 0; 0; 0.001];
 Q = [10,0,0;
      0,100,0;
      0,0,1000];
@@ -21,13 +21,21 @@ NTMT = 50;
 NEES_data = zeros(NTMT,t);
 NIS_data  = zeros(NTMT,t);
 
+% Instantiate system
+sys = SkycraneSystem(dt,N);
+
+% Distribution of perturbations to sample
+P_dx0 = diag([1,0.05,1,0.05,0.05,0.00001]);
+u_dx0 = [0;0;0;0;0;0];
+
+% Preallocate
+x_err = zeros(sys.n,N);
+y_err = zeros(sys.p,N);
 
 for i = 1:NTMT % for each round of testing
-    
-    
 
-% Instantiate system and simulate truth data
-sys = SkycraneSystem(dt,N,dx0);
+% Simulate new truth data
+sys = sys.generate_data(mvnrnd(u_dx0,P_dx0)');
 
 % Run Kalman filter
 [x,P,P_pri,dx_Pri] = lkf(sys,Q,R);
@@ -38,8 +46,6 @@ P_filter = P;
 x_truth = sys.xs;
 y_truth = sys.ys;
 [~,~,~,H] = sys.get_lin_matrices(0);
-    
-    
     
     for j = 1:N % for each time step
     x_err(:,j) = x_truth(:,j+1) - x(:,j+1);
@@ -77,7 +83,6 @@ r2NIS = chi2inv(1-alpha/2,NTMT*p)/NTMT;
 %% Plots
 
 % NEES Plot
-
 
 figure()
 hold on
